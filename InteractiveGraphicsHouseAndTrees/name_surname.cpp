@@ -10,6 +10,8 @@
 #include "Primitives.h"
 #include <iostream>
 #include <time.h>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -72,6 +74,29 @@ int flagDirection = 1;
 
 int entityCount = 0;
 
+void saveScene() {
+	ofstream ofs("environment.txt");
+	ofs << entityCount << "\n";
+	for (int i = 0; i < entityCount; i++) {
+		ofs << entities[i].pos.x << " " << entities[i].pos.y << " " << entities[i].pos.z <<  
+			" " << entities[i].rotate << " " << entities[i].type << "\n";
+	}
+	ofs.close();
+}
+
+void loadScene() {
+	fstream envFile("environment.txt", std::ios_base::in);
+	envFile >> entityCount;
+	
+	for (int i = 0; i < entityCount; i++) {
+		envFile >> entities[i].pos.x;
+		envFile >> entities[i].pos.y;
+		envFile >> entities[i].pos.z;
+		envFile >> entities[i].rotate;
+		envFile >> entities[i].type;
+	}
+}
+
 void initEntity() {
 	for (int i = 0; i < 60; i++) {
 		cam.Forward();
@@ -103,6 +128,15 @@ void Tree() {
 	glPushMatrix();
 	glRotatef(-90, 1, 0, 0);
 	Cylinder(trunkBase, trunkHeight, 20, 1);
+	glPopMatrix();
+
+	//grass base
+	double baseWidth = 1.5; double baseHeight = 0.05; double baseLength = 1.5;
+	glPushMatrix();
+	glColor3f(0, 0.8, 0);
+	glScalef(baseWidth, baseHeight, baseLength);
+	glTranslatef(0, -trunkHeight/2.0, 0);
+	Cube(1);
 	glPopMatrix();
 
 	//barks
@@ -182,6 +216,14 @@ void Castle() {
 	glTranslatef(-baseWidth / 6.0, baseHeight + towerHeight + coneHeight, 0);
 	glRotatef(-90, 1, 0, 0);
 	Cylinder(rodBase, rodHeight, 20, 10);
+	glPopMatrix();
+
+	//rod top
+	double rodTopSize = 0.15;
+	glPushMatrix();
+	glColor3f(0.4, 0.4, 0.4);
+	glTranslatef(-baseWidth / 6.0, baseHeight + towerHeight + coneHeight + rodHeight, 0);
+	Sphere(rodTopSize, 10, 10);
 	glPopMatrix();
 
 
@@ -300,7 +342,7 @@ void display()
 	string entityName = (entityType == "Castle") ? "Kiz Kulesi" : "Cherry Blossom";
 	glPopMatrix();
 	glColor3f(0, 0, 0);
-	string info = "Spacebar: Add " + entityName + " Tab: Change  Move: w/a/s/d  S: Save L: Load (PLEASE USE MINIMUM NO. OF TREES)";
+	string info = "Spacebar: Add " + entityName + " Tab: Change  Move: w/a/s/d  F1: Save F2: Load (PLEASE USE MINIMUM NO. OF TREES)";
 	infoText = info.c_str();
 	vprint(-winWidth / 2 + 90, -winHeight / 2 + 30, GLUT_BITMAP_9_BY_15, infoText);
 
@@ -371,7 +413,8 @@ void onSpecialKeydown(int key, int x, int y)
 	case GLUT_KEY_DOWN: downKey = true; break;
 	case GLUT_KEY_LEFT: leftKey = true; break;
 	case GLUT_KEY_RIGHT: rightKey = true; break;
-
+	case GLUT_KEY_F1: saveScene(); break;
+	case GLUT_KEY_F2: loadScene(); break;
 	}
 	// to refresh the window it calls display() function
 	// glutPostRedisplay();
@@ -480,6 +523,12 @@ void onTimer(int v) {
 }
 #endif
 
+bool does_envFile_exist(const char* fileName)
+{
+	std::ifstream envFile(fileName);
+	return envFile.good();
+}
+
 void Init() {
 	
 	glutWarpPointer(200, 200);
@@ -506,6 +555,9 @@ void Init() {
 		leaves_t_yAxis[j] = -0.7 + ((rand() % 15000) / 10000.0);
 		leaves_t_zAxis[j] = -0.7 + ((rand() % 15000) / 10000.0);
 	}
+
+	if (does_envFile_exist("environment.txt"))
+		loadScene();
 }
 
 
